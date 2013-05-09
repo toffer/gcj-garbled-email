@@ -1,0 +1,343 @@
+#!/usr/bin/env python
+
+import datrie
+import string
+import sys
+
+from pprint import pprint
+
+EMAIL_DICT_FILE = 'garbled_email_dictionary.txt'
+WILDCARDS_FILE = 'cleaned_wildcards.txt'
+
+
+def read(filename):
+    """Yield a "test" chunk of lines from filename."""
+    with open(filename, 'r') as f:
+        num_tests = int(f.readline())
+        for t in range(num_tests):
+            yield f.readline()
+
+def munge(test_chunks):
+    """Output vars that are used as input to solve()."""
+    for chunk in test_chunks:
+        yield chunk.strip()
+
+def format(index, result):
+    """Format output properly."""
+    return "Case #%s: %s" % (index, result)
+
+def word_variations(word):
+    variations = [word]
+    for i in range(len(word)):
+        tmp = list(word)
+        tmp[i] = u'*'
+        variations.append(''.join(tmp))
+    if len(word) > 5:
+        for i in range(len(word) - 5):
+            tmp = list(word)
+            tmp[i] = u'*'
+            tmp[i + 5] = '*'
+            variations.append(''.join(tmp))
+    if len(word) > 10:
+        for i in range(len(word) - 10):
+            tmp = list(word)
+            tmp[i] = u'*'
+            tmp[i + 5] = '*'
+            tmp[i + 10] = '*'
+            variations.append(''.join(tmp))
+    return variations
+
+def make_trie(filename):
+    valid_chars = string.ascii_lowercase + '*'
+    trie = datrie.BaseTrie(valid_chars)
+    with open(filename) as f:
+        for line in f:
+            word = line.strip().decode('utf-8')
+            trie[word] = 0
+    return trie
+
+def add_if_best(word, data_list):
+    w_len = len(word)
+    for d in data_list:
+        d_len = len(d)
+        if w_len == d_len:
+            if word.count('*') < d.count('*'):
+                data_list.remove(d)
+                data_list.append(word)
+            return data_list
+    data_list.append(word)
+    return data_list
+
+
+def indexed_variations(word, wildcards_trie):
+    """
+    Build data structure of matching words from trie.
+
+    Return array of arrays:
+        d[index][list of matching words in wildcards_trie]
+
+    """
+    wlist = list(word)
+    data = [[] for x in range(len(wlist))]
+    for i in range(len(wlist)):
+        data[i] = []
+        # if i == len(wlist) - 1:
+        #     continue
+        search_deeper = True
+        j = i + 1
+        # print '=== %s ===' % i
+        while search_deeper:
+            segment = ''.join(wlist[i:j]).decode('utf-8')
+            segments = word_variations(segment)
+            # print segment
+            # print segments
+            search_deeper_count = len(segments)
+            for s in segments:
+                # print s
+                if s in wildcards_trie:
+                    # print 's in trie'
+                    data[i].append(s)
+                    # data[i] = add_if_best(s, data[i])
+                # if j >= len(wlist):
+                #     print 'j > len(wlist)'
+                #     # search_deeper = False
+                #     search_deeper_count -= 1
+                # if (search_deeper and 
+                #     not wildcards_trie.has_keys_with_prefix(s)):
+                #     print 's is not prefix'
+                #     search_deeper = False
+                if j >= len(wlist) or not wildcards_trie.has_keys_with_prefix(s):
+                    # print 's is not >= len(wlist) or not prefix'
+                    search_deeper_count -= 1
+                if search_deeper_count > 0:
+                    search_deeper = True
+                else:
+                    search_deeper = False
+                # print '---'
+            j += 1
+
+    # Now, prune data so we only have best candidate of each length....
+    # No sense checking 'p*', if 'pr' is a better option.
+    # for i in range(len(data)):
+
+    return data
+
+
+def successors(state, variations):
+    """Return list of tuples for next segments to consider."""
+    result = []
+    i, j, word = state
+    next_index = i + len(word)
+
+    # print i, j, word
+    # print next_index
+    # print len(variations)
+
+    # Go deeper
+    if len(variations) > next_index:
+        for x in range(len(variations[next_index])):
+            result.append(tuple([next_index, x, variations[next_index][x]]))
+    # Else, search breadth
+    elif len(variations[i]) > j + 1:
+        result.append(tuple([i, j + 1, variations[i][j + 1]]))
+    return result
+
+WILDCARDS = make_trie(WILDCARDS_FILE)
+def solve(word):
+    scores = []
+    lowest_score = tuple([len(word), 'blah'])
+    variations = indexed_variations(word, WILDCARDS)
+    # for i in range(len(variations)):
+    #     print len(variations[i])
+    pprint(variations)
+    # return 'blah'
+
+    # state is a list of tuples:
+    #   (Num. of asterisks (score), 
+    #    list of tuples representing indexes to variations,
+    #    word segment at that index)
+    starting_state = [(-1, 0, u'.')]
+    frontier = [starting_state]
+    while frontier:
+        print len(frontier), lowest_score
+        path = frontier.pop(0)
+        s = path[-1]
+        for state in successors(s, variations):
+            base = " | ".join([blah[2] for blah in path])
+            base_score = base.count('*')
+            # print "base", base_score, base, path
+            if base_score > lowest_score[0]:
+                continue
+
+            path2 = path + [state]
+            if state[0] + len(state[2]) == len(word):
+                scorable = " | ".join([blah[2] for blah in path2])
+                score = scorable.count('*')
+                if score < lowest_score[0]:
+                    lowest_score = tuple([score, scorable])
+                    continue
+            else:
+                # print "frontier add", path2
+                frontier.append(path2)
+    # result = min(scores, key=lambda x:x[0])
+    result = lowest_score
+    print result
+    return result[0]
+
+def is_valid(candidate):
+    """Do all wildcards have at least 5 char separation?"""
+    indexes = [i for i in range(len(candidate)) if candidate.startswith('*', i)]
+    if len(indexes) < 2:
+        return True
+
+    last = indexes.pop()
+    while indexes:
+        prev = indexes.pop()
+        if last - prev < 5:
+            return False
+        last = prev
+    return True
+
+# def best_possible(candidate):
+#     return candidate.find('*') >= 4 or candidate.find('*') == -1
+
+def add_valid(candidate, best_list):
+    # print candidate, best_list
+    c_index = candidate.find('*')
+    if 0 <= c_index <= 4:
+        match_list = [x for x in best_list if x.find('*') == c_index]
+        if match_list:
+            match = match_list[0]
+            if candidate.count('*') < match.count('*'):
+                best_list.remove(match)
+                best_list.append(candidate)
+        else:
+            best_list.append(candidate)
+    else:
+        match_list = [x for x in best_list if x.find('*') == -1 or x.find('*') > 4]
+        if match_list:
+            match = match_list[0]
+            if candidate.count('*') < match.count('*'):
+                best_list.remove(match)
+                best_list.append(candidate)
+        else:
+            best_list.append(candidate)
+    # print best_list
+    # print "---"
+    return best_list
+
+    # if len(best_list) == 1 and best_possible(best_list[0]):
+    #     pass
+    # elif not best_list or best_possible(candidate):
+    #     best_list = [candidate]
+    # else:
+    #     c_index = candidate.find('*')
+    #     b_indexes = [x.find('*') for x in best_list]
+    #     if c_index not in b_indexes:
+    #         best_list.append(candidate)
+    # print best_list
+    # print "---"
+    # return best_list
+
+def find_best(candidates, solutions):
+    word_length = len(solutions) + 1
+    best = []
+    best_score = word_length
+    if not solutions:
+        best = [u'*']
+        for c in candidates:
+            if c.count('*') < best.count('*'):
+                best = [c]
+    else:
+        # best = '* | ' + solutions[-1]
+        # best = '*' + solutions[-1]
+        # best_score = best.count('*')
+        # for c in candidates:
+        #     c_len = len(c)
+        #     if c_len == word_length:
+        #         c_score = c.count('*')
+        #         if c_score < best_score:
+        #             best_score = c_score
+        #             best = c
+        #     else:
+        #         index = len(solutions) - c_len 
+        #         # new_candidate = c + ' | ' + solutions[index]
+        #         new_candidate = c + solutions[index]
+        #         new_candidate_score = new_candidate.count('*')
+        #         if new_candidate_score < best_score:
+        #             best_score = new_candidate_score
+        #             best = new_candidate
+        for c in candidates:
+            c_len = len(c)
+            if c_len == word_length:
+                # Don't have to combine with solutions if c_len == word_length
+                if c.count('*') == 0:
+                    best = [c]
+                    break
+                else:
+                    best = add_valid(c, best)
+                # c_score = c.count('*')
+                # FIXME: best_score is bullshit!
+                # compare to best score in best list
+                # if c_score < best_score:
+                #     best_score = c_score
+                #     best = [c]
+            else:
+                index = len(solutions) - c_len
+                for s in solutions[index]:
+                    new_candidate = c + s 
+                    if is_valid(new_candidate):
+                        best = add_valid(new_candidate, best)
+
+    return best
+
+def solve2(word):
+    variations = indexed_variations(word, WILDCARDS)
+    # pprint(variations)
+
+    solutions = []
+    while variations:
+        last = variations.pop()
+        # print "last", last
+        best = find_best(last, solutions)
+        solutions.append(best)
+        # print best
+        # print "solutions", solutions
+    # print solutions[-1]
+    finals = solutions[-1]
+    # print sorted(finals, key=lambda x: x.count('*'))[0]
+    return min([x.count('*') for x in finals])
+    # return solutions[-1].count('*')
+
+
+
+
+def main(argv=None):
+    if argv == None:
+        argv = sys.argv
+
+    if len(argv) != 2:
+        sys.stderr.write("Usage: %s <input_file>" % argv[0])
+        return 2
+
+    #
+    # Code for generating "wildcards.txt".
+    # Dedupe it with 'sort | uniq > cleaned_wildcards.txt'
+    # 
+    # with open(EMAIL_DICT_FILE) as f:
+    #     for line in f:
+    #         for v in word_variations(line.strip()):
+    #             print v
+
+    infile = argv[1]
+    raw = read(infile)
+    munged = munge(raw)
+
+    for index, test in enumerate(munged):
+        print format(index + 1, solve2(test))
+
+if __name__ == '__main__':
+    main()
+
+
+

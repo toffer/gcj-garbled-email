@@ -69,7 +69,6 @@ def add_if_best(word, data_list):
     data_list.append(word)
     return data_list
 
-
 def indexed_variations(word, wildcards_trie):
     """
     Build data structure of matching words from trie.
@@ -82,47 +81,25 @@ def indexed_variations(word, wildcards_trie):
     data = [[] for x in range(len(wlist))]
     for i in range(len(wlist)):
         data[i] = []
-        # if i == len(wlist) - 1:
-        #     continue
         search_deeper = True
         j = i + 1
-        # print '=== %s ===' % i
         while search_deeper:
             segment = ''.join(wlist[i:j]).decode('utf-8')
             segments = word_variations(segment)
-            # print segment
-            # print segments
             search_deeper_count = len(segments)
             for s in segments:
-                # print s
                 if s in wildcards_trie:
-                    # print 's in trie'
                     data[i].append(s)
                     # data[i] = add_if_best(s, data[i])
-                # if j >= len(wlist):
-                #     print 'j > len(wlist)'
-                #     # search_deeper = False
-                #     search_deeper_count -= 1
-                # if (search_deeper and 
-                #     not wildcards_trie.has_keys_with_prefix(s)):
-                #     print 's is not prefix'
-                #     search_deeper = False
                 if j >= len(wlist) or not wildcards_trie.has_keys_with_prefix(s):
-                    # print 's is not >= len(wlist) or not prefix'
                     search_deeper_count -= 1
+
                 if search_deeper_count > 0:
                     search_deeper = True
                 else:
                     search_deeper = False
-                # print '---'
             j += 1
-
-    # Now, prune data so we only have best candidate of each length....
-    # No sense checking 'p*', if 'pr' is a better option.
-    # for i in range(len(data)):
-
     return data
-
 
 def is_valid(candidate):
     """Do all wildcards have at least 5 char separation?"""
@@ -139,7 +116,6 @@ def is_valid(candidate):
     return True
 
 def add_valid(candidate, best_list):
-    # print candidate, best_list
     c_index = candidate.find('*')
     if 0 <= c_index <= 4:
         match_list = [x for x in best_list if x.find('*') == c_index]
@@ -159,22 +135,7 @@ def add_valid(candidate, best_list):
                 best_list.append(candidate)
         else:
             best_list.append(candidate)
-    # print best_list
-    # print "---"
     return best_list
-
-    # if len(best_list) == 1 and best_possible(best_list[0]):
-    #     pass
-    # elif not best_list or best_possible(candidate):
-    #     best_list = [candidate]
-    # else:
-    #     c_index = candidate.find('*')
-    #     b_indexes = [x.find('*') for x in best_list]
-    #     if c_index not in b_indexes:
-    #         best_list.append(candidate)
-    # print best_list
-    # print "---"
-    # return best_list
 
 def find_best(candidates, solutions):
     word_length = len(solutions) + 1
@@ -186,24 +147,6 @@ def find_best(candidates, solutions):
             if c.count('*') < best.count('*'):
                 best = [c]
     else:
-        # best = '* | ' + solutions[-1]
-        # best = '*' + solutions[-1]
-        # best_score = best.count('*')
-        # for c in candidates:
-        #     c_len = len(c)
-        #     if c_len == word_length:
-        #         c_score = c.count('*')
-        #         if c_score < best_score:
-        #             best_score = c_score
-        #             best = c
-        #     else:
-        #         index = len(solutions) - c_len 
-        #         # new_candidate = c + ' | ' + solutions[index]
-        #         new_candidate = c + solutions[index]
-        #         new_candidate_score = new_candidate.count('*')
-        #         if new_candidate_score < best_score:
-        #             best_score = new_candidate_score
-        #             best = new_candidate
         for c in candidates:
             c_len = len(c)
             if c_len == word_length:
@@ -213,41 +156,25 @@ def find_best(candidates, solutions):
                     break
                 else:
                     best = add_valid(c, best)
-                # c_score = c.count('*')
-                # FIXME: best_score is bullshit!
-                # compare to best score in best list
-                # if c_score < best_score:
-                #     best_score = c_score
-                #     best = [c]
             else:
                 index = len(solutions) - c_len
                 for s in solutions[index]:
                     new_candidate = c + s 
                     if is_valid(new_candidate):
                         best = add_valid(new_candidate, best)
-
     return best
 
 def solve2(word, trie):
     variations = indexed_variations(word, trie)
-    # pprint(variations)
 
     solutions = []
     while variations:
         last = variations.pop()
-        # print "last", last
         best = find_best(last, solutions)
         solutions.append(best)
-        # print best
-        # print "solutions", solutions
-    # print solutions[-1]
     finals = solutions[-1]
     # print sorted(finals, key=lambda x: x.count('*'))[0]
     return min([x.count('*') for x in finals])
-    # return solutions[-1].count('*')
-
-
-
 
 def main(argv=None):
     if argv == None:

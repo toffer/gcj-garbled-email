@@ -124,67 +124,6 @@ def indexed_variations(word, wildcards_trie):
     return data
 
 
-def successors(state, variations):
-    """Return list of tuples for next segments to consider."""
-    result = []
-    i, j, word = state
-    next_index = i + len(word)
-
-    # print i, j, word
-    # print next_index
-    # print len(variations)
-
-    # Go deeper
-    if len(variations) > next_index:
-        for x in range(len(variations[next_index])):
-            result.append(tuple([next_index, x, variations[next_index][x]]))
-    # Else, search breadth
-    elif len(variations[i]) > j + 1:
-        result.append(tuple([i, j + 1, variations[i][j + 1]]))
-    return result
-
-# WILDCARDS = make_trie(WILDCARDS_FILE)
-def solve(word):
-    scores = []
-    lowest_score = tuple([len(word), 'blah'])
-    variations = indexed_variations(word, WILDCARDS)
-    # for i in range(len(variations)):
-    #     print len(variations[i])
-    pprint(variations)
-    # return 'blah'
-
-    # state is a list of tuples:
-    #   (Num. of asterisks (score), 
-    #    list of tuples representing indexes to variations,
-    #    word segment at that index)
-    starting_state = [(-1, 0, u'.')]
-    frontier = [starting_state]
-    while frontier:
-        print len(frontier), lowest_score
-        path = frontier.pop(0)
-        s = path[-1]
-        for state in successors(s, variations):
-            base = " | ".join([blah[2] for blah in path])
-            base_score = base.count('*')
-            # print "base", base_score, base, path
-            if base_score > lowest_score[0]:
-                continue
-
-            path2 = path + [state]
-            if state[0] + len(state[2]) == len(word):
-                scorable = " | ".join([blah[2] for blah in path2])
-                score = scorable.count('*')
-                if score < lowest_score[0]:
-                    lowest_score = tuple([score, scorable])
-                    continue
-            else:
-                # print "frontier add", path2
-                frontier.append(path2)
-    # result = min(scores, key=lambda x:x[0])
-    result = lowest_score
-    print result
-    return result[0]
-
 def is_valid(candidate):
     """Do all wildcards have at least 5 char separation?"""
     indexes = [i for i in range(len(candidate)) if candidate.startswith('*', i)]
@@ -198,9 +137,6 @@ def is_valid(candidate):
             return False
         last = prev
     return True
-
-# def best_possible(candidate):
-#     return candidate.find('*') >= 4 or candidate.find('*') == -1
 
 def add_valid(candidate, best_list):
     # print candidate, best_list

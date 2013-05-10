@@ -119,22 +119,16 @@ def add_valid(candidate, best_list):
     c_index = candidate.find('*')
     if 0 <= c_index <= 4:
         match_list = [x for x in best_list if x.find('*') == c_index]
-        if match_list:
-            match = match_list[0]
-            if candidate.count('*') < match.count('*'):
-                best_list.remove(match)
-                best_list.append(candidate)
-        else:
-            best_list.append(candidate)
     else:
         match_list = [x for x in best_list if x.find('*') == -1 or x.find('*') > 4]
-        if match_list:
-            match = match_list[0]
-            if candidate.count('*') < match.count('*'):
-                best_list.remove(match)
-                best_list.append(candidate)
-        else:
+
+    if match_list:
+        match = match_list[0]
+        if candidate.count('*') < match.count('*'):
+            best_list.remove(match)
             best_list.append(candidate)
+    else:
+        best_list.append(candidate)
     return best_list
 
 def find_best(candidates, solutions):

@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import datrie
+import os
 import string
 import sys
 
 from pprint import pprint
 
 EMAIL_DICT_FILE = 'garbled_email_dictionary.txt'
-WILDCARDS_FILE = 'cleaned_wildcards.txt'
+WILDCARDS_FILE = 'wildcards_dictionary.txt'
 
 
 def read(filename):
@@ -142,7 +143,7 @@ def successors(state, variations):
         result.append(tuple([i, j + 1, variations[i][j + 1]]))
     return result
 
-WILDCARDS = make_trie(WILDCARDS_FILE)
+# WILDCARDS = make_trie(WILDCARDS_FILE)
 def solve(word):
     scores = []
     lowest_score = tuple([len(word), 'blah'])
@@ -291,8 +292,8 @@ def find_best(candidates, solutions):
 
     return best
 
-def solve2(word):
-    variations = indexed_variations(word, WILDCARDS)
+def solve2(word, trie):
+    variations = indexed_variations(word, trie)
     # pprint(variations)
 
     solutions = []
@@ -320,21 +321,28 @@ def main(argv=None):
         sys.stderr.write("Usage: %s <input_file>" % argv[0])
         return 2
 
-    #
-    # Code for generating "wildcards.txt".
-    # Dedupe it with 'sort | uniq > cleaned_wildcards.txt'
-    # 
-    # with open(EMAIL_DICT_FILE) as f:
-    #     for line in f:
-    #         for v in word_variations(line.strip()):
-    #             print v
+    # Generate "wildcards_dictionary.txt" just one time.
+    if not os.path.isfile(WILDCARDS_FILE):
+        with open(EMAIL_DICT_FILE) as f:
+            deduped = set()
+            for line in f:
+                for v in word_variations(line.strip()):
+                    deduped.add(v)
+        with open(WILDCARDS_FILE, 'w') as wild:
+            # Adding to trie is more efficient with sorted input.
+            sorted_deduped = sorted(list(deduped))
+            for word in sorted_deduped:
+                wild.write(word + '\n')
+
+
+    trie = make_trie(WILDCARDS_FILE)
 
     infile = argv[1]
     raw = read(infile)
     munged = munge(raw)
 
     for index, test in enumerate(munged):
-        print format(index + 1, solve2(test))
+        print format(index + 1, solve2(test, trie))
 
 if __name__ == '__main__':
     main()

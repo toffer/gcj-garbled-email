@@ -57,18 +57,6 @@ def make_trie(filename):
             trie[word] = 0
     return trie
 
-def add_if_best(word, data_list):
-    w_len = len(word)
-    for d in data_list:
-        d_len = len(d)
-        if w_len == d_len:
-            if word.count('*') < d.count('*'):
-                data_list.remove(d)
-                data_list.append(word)
-            return data_list
-    data_list.append(word)
-    return data_list
-
 def indexed_variations(word, wildcards_trie):
     """
     Build data structure of matching words from trie.
@@ -90,7 +78,6 @@ def indexed_variations(word, wildcards_trie):
             for s in segments:
                 if s in wildcards_trie:
                     data[i].append(s)
-                    # data[i] = add_if_best(s, data[i])
                 if j >= len(wlist) or not wildcards_trie.has_keys_with_prefix(s):
                     search_deeper_count -= 1
 

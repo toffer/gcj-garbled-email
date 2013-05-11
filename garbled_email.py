@@ -5,8 +5,6 @@ import os
 import string
 import sys
 
-from pprint import pprint
-
 EMAIL_DICT_FILE = 'garbled_email_dictionary.txt'
 WILDCARDS_FILE = 'wildcards_dictionary.txt'
 
@@ -191,6 +189,3 @@ def main(argv=None):
 
 if __name__ == '__main__':
     main()
-
-
-

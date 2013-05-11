@@ -19,9 +19,9 @@ def read(filename):
             yield f.readline()
 
 def munge(test_chunks):
-    """Output vars that are used as input to solve()."""
+    """Output list of vars that are used as input to solve()."""
     for chunk in test_chunks:
-        yield chunk.strip()
+        yield [chunk.strip()]
 
 def format(index, result):
     """Format output properly."""
@@ -145,7 +145,7 @@ def find_best(candidates, solutions):
                         best = add_valid(new_candidate, best)
     return best
 
-def solve2(word, trie):
+def solve(word, trie):
     variations = indexed_variations(word, trie)
 
     solutions = []
@@ -186,7 +186,8 @@ def main(argv=None):
     munged = munge(raw)
 
     for index, test in enumerate(munged):
-        print format(index + 1, solve2(test, trie))
+        test.append(trie)
+        print format(index + 1, solve(*test))
 
 if __name__ == '__main__':
     main()

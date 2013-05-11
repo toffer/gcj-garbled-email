@@ -1,8 +1,18 @@
-README
-======
+Garbled Email
+=============
 My solution to problem C, "Garbled Email", in the 2013 Google Code Jam, round 1B.
 
 Unfortunately, I did not do this in the allowed 2.5 hour time window. In fact, it took me many more hours once the competition was over to get it working. But, I did complete it without looking at anyone else's analysis or implementation.
+
+Usage
+-----
+(See `inputs` directory for input files.)
+
+    $ garbled_email.py <input_file>
+    Case #1: 0
+    Case #2: 2
+    Case #3: 1
+    Case #4: 1
 
 
 Problem

@@ -55,35 +55,32 @@ def make_trie(filename):
             trie[word] = 0
     return trie
 
-def indexed_variations(word, wildcards_trie):
+def indexed_variations(word, trie):
     """
     Build data structure of matching words from trie.
 
     Return array of arrays:
-        d[index][list of matching words in wildcards_trie]
+        d[index][list of matching words in trie]
 
     """
     wlist = list(word)
     data = [[] for x in range(len(wlist))]
+
     for i in range(len(wlist)):
         data[i] = []
-        search_deeper = True
-        j = i + 1
-        while search_deeper:
-            segment = ''.join(wlist[i:j]).decode('utf-8')
-            segments = word_variations(segment)
-            search_deeper_count = len(segments)
-            for s in segments:
-                if s in wildcards_trie:
-                    data[i].append(s)
-                if j >= len(wlist) or not wildcards_trie.has_keys_with_prefix(s):
-                    search_deeper_count -= 1
+        segment = ''.join(wlist[i:i + 1]).decode('utf-8')
+        segments = word_variations(segment)
 
-                if search_deeper_count > 0:
-                    search_deeper = True
-                else:
-                    search_deeper = False
-            j += 1
+        while segments:
+            s = segments.pop()
+            len_s = len(s)
+            if s in trie:
+                data[i].append(s)
+            if i + len_s < len(wlist) and trie.has_keys_with_prefix(s):
+                segments.append(s + wlist[i + len_s])
+                wild_seg = s + '*'
+                if is_valid(wild_seg):
+                    segments.append(wild_seg)
     return data
 
 def is_valid(candidate):

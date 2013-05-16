@@ -25,25 +25,25 @@ def format(index, result):
     """Format output properly."""
     return "Case #%s: %s" % (index, result)
 
+def apply_wildcards(word, wildcard_indexes):
+    result = []
+    for i, char in enumerate(word):
+        if i in wildcard_indexes:
+            result.append('*')
+        else:
+            result.append(char)
+    return ''.join(result).decode('utf-8')
+
 def word_variations(word):
     variations = [word]
-    for i in range(len(word)):
-        tmp = list(word)
-        tmp[i] = u'*'
-        variations.append(''.join(tmp))
-    if len(word) > 5:
-        for i in range(len(word) - 5):
-            tmp = list(word)
-            tmp[i] = u'*'
-            tmp[i + 5] = '*'
-            variations.append(''.join(tmp))
-    if len(word) > 10:
-        for i in range(len(word) - 10):
-            tmp = list(word)
-            tmp[i] = u'*'
-            tmp[i + 5] = '*'
-            tmp[i + 10] = '*'
-            variations.append(''.join(tmp))
+    max_replacements = int((len(word) - 1) / 5) + 1
+
+    for r in range(max_replacements):
+        replacement_indexes = [x * 5 for x in range(r + 1)]
+        while replacement_indexes[-1] < len(word):
+            variations.append(apply_wildcards(word, replacement_indexes))
+            replacement_indexes = [x + 1 for x in replacement_indexes]
+
     return variations
 
 def make_trie(filename):

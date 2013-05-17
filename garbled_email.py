@@ -135,8 +135,12 @@ def find_best(candidates, solutions):
             else:
                 index = len(solutions) - c_len
                 for s in solutions[index]:
-                    new_candidate = c + s 
-                    if is_valid(new_candidate):
+                    new_candidate = c + s
+                    # Only need to check validity in substring where 'candidate'
+                    # and 'solution' are joined together. Checking entire string
+                    # is wasteful, and really, really slow!
+                    joint = c[-5:] + s[:5]
+                    if is_valid(joint):
                         best = add_valid(new_candidate, best)
     return best
 

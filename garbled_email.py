@@ -85,7 +85,7 @@ def indexed_variations(word, trie):
 
 def is_valid(candidate):
     """Do all wildcards have at least 5 char separation?"""
-    indexes = [i for i in range(len(candidate)) if candidate.startswith('*', i)]
+    indexes = [i for i, char in enumerate(candidate) if char == '*']
     if len(indexes) < 2:
         return True
 

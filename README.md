@@ -4,6 +4,10 @@ My solution to problem C, "Garbled Email", in the 2013 Google Code Jam, round 1B
 
 Unfortunately, I did not do this in the allowed 2.5 hour time window. In fact, it took me many more hours once the competition was over to get it working. But, I did complete it without looking at anyone else's analysis or implementation.
 
+See my ["Garbled Email" blog post][blog] for a more in-depth discussion of my solution.
+
+[blog]: http://www.offermann.us/2013/05/google-code-jam-ungarbling-a-garbled-email.html
+
 Usage
 -----
 (See `inputs` directory for input files.)
